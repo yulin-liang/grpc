@@ -2496,6 +2496,11 @@ static void read_action_locked(void* tp, grpc_error* error) {
     grpc_error* errors[3] = {GRPC_ERROR_REF(error), GRPC_ERROR_NONE,
                              GRPC_ERROR_NONE};
     for (; i < t->read_buffer.count && errors[1] == GRPC_ERROR_NONE; i++) {
+      grpc_core::BdpEstimator* bdp_est = t->flow_control->bdp_estimator();
+      if (bdp_est) {
+        bdp_est->AddIncomingBytes(
+            static_cast<int64_t> GRPC_SLICE_LENGTH(t->read_buffer.slices[i]));
+      }
       errors[1] = grpc_chttp2_perform_read(t, t->read_buffer.slices[i]);
     }
     if (errors[1] != GRPC_ERROR_NONE) {
