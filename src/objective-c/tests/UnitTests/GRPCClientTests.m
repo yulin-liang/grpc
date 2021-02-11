@@ -108,8 +108,9 @@ static GRPCProtoMethod *kFullDuplexCallMethod;
 }
 
 - (void)setUp {
-  // Add a custom user agent prefix that will be used in test
+  // Add a custom user agent prefix and suffix that will be used in test
   [GRPCCall setUserAgentPrefix:@"Foo" forHost:kHostAddress];
+  [GRPCCall setUserAgentSuffix:@"Suffix" forHost:kHostAddress];
   // Register test server as non-SSL.
   [GRPCCall useInsecureConnectionsForHost:kHostAddress];
 
@@ -280,7 +281,7 @@ static GRPCProtoMethod *kFullDuplexCallMethod;
   [self waitForExpectationsWithTimeout:TEST_TIMEOUT handler:nil];
 }
 
-- (void)testUserAgentPrefix {
+- (void)testUserAgentPrefixAndSuffix {
   __weak XCTestExpectation *response =
       [self expectationWithDescription:@"Empty response received."];
   __weak XCTestExpectation *completion = [self expectationWithDescription:@"Empty RPC completed."];
@@ -308,6 +309,7 @@ static GRPCProtoMethod *kFullDuplexCallMethod;
         expectedUserAgent = [expectedUserAgent stringByAppendingString:@" ("];
         expectedUserAgent = [expectedUserAgent stringByAppendingString:@GPR_PLATFORM_STRING];
         expectedUserAgent = [expectedUserAgent stringByAppendingString:@"; chttp2)"];
+        expectedUserAgent = [expectedUserAgent stringByAppendingString:@" Suffix"];
         XCTAssertEqualObjects(userAgent, expectedUserAgent);
 
         // Change in format of user-agent field in a direction that does not match the regex will
@@ -322,7 +324,7 @@ static GRPCProtoMethod *kFullDuplexCallMethod;
                                             options:0
                                               range:NSMakeRange(0, [userAgent length])
                                        withTemplate:@""];
-        XCTAssertEqualObjects(customUserAgent, @"Foo");
+        XCTAssertEqualObjects(customUserAgent, @"Foo Suffix");
 
         [response fulfill];
       }
